@@ -5,237 +5,188 @@ from dataclasses import dataclass, field
 from typing import Any, List, Union
 
 
+class Empty(Exception):
+    pass
+
+
 @dataclass
 class Stack:
-    """Implementation of stacks using lists
+    """Implementation of Stack using Lists
 
     O(1) time for all operations
     O(n) time for max operation
-    Assumes LIFO;
-    items on the right is the top, left is bottom
+    Assumes LIFO
+    items on the right is the top, left is the bottom
     """
 
-    _data: List[Any] = field(init=False, default_factory=list)
+    data: List[int] = field(init=False, default=lambda: [])
+
+    def __repr__(self):
+        return f"Stack({self.data})"
 
     def empty(self) -> bool:
-        """returns true if stack is empty"""
-        return self._data == []
-
-    # pyre-ignore
-    def pop(self) -> Any:
-        """removes item from right(top) of stack"""
-        if self.empty():
-            raise _Empty("Stack is empty")
-        return self._data.pop()
-
-    # pyre-ignore
-    def push(self, item: Any) -> None:
-        """adds item to right(top) of stack
-
-        :param item: item to be pushed
-        :type item: Any
-        """
-        self._data.append(item)
-
-    # pyre-ignore
-    def peek(self) -> Any:
-        """returns right(top) item of stack
-
-        :return: [description]
-        :rtype: Any
-        """
-        return self._data[-1]
-
-    def size(self) -> int:
-        """returns number of items in a stack
+        """Returns True if Stack is empty, false otherwise
 
         Returns
         -------
-        int
-            the length of stack
+        bool
+            True if Stack is empty, false otherwise
         """
-        return len(self._data)
+        return self.data == []
 
-    def max(self) -> Union[int, float]:
-        """returns the maximum item in stack
-
-        Takes O(n) worse time
-
-        :return: [description]
-        :rtype: Any[int, float]
-        """
-        return max(self._data)
-
-
-@dataclass
-class Item:
-    item: Any  # pyre-ignore
-    max: Any  # pyre-ignore
-
-
-@dataclass
-class MaxStack:
-    """Implementation of stacks using lists
-
-    O(1) time for all operations
-    Assumes LIFO;
-    items on the right is the top, left is bottom
-    """
-
-    _data: List[Item] = field(init=False, default_factory=list)
-
-    # pyre-ignore
-    def _create_stack(self, items: List[Any]) -> None:
-        """Creates a stack from list of items
+    def push(self, item: Any):
+        """Adds an item to top (right) of stack
 
         Parameters
         ----------
-        items : list
-            [description]
+        item : Any
+            item to be pushed
         """
-        # push items to a stack if user supplies list of items
-        for item in items:
-            self.push(item)
+        self.data.append(item)
 
-    def is_empty(self) -> bool:
-        return self._data == []
-
-    def max(self) -> Union[float, int]:
-        """Returns maximum value in a stack
-
-        Returns
-        -------
-        Union[float, int]
-            [description]
-
-        Raises
-        ------
-        _Empty
-            [description]
-        """
-        if self.is_empty():
-            raise _Empty("Stack is empty")
-        return self._data[-1].max
-
-    # pyre-ignore
-    def pop(self) -> Any:
-        """removes item from the right(top) of stack
+    def peek(self) -> Any:
+        """Returns the last item in stack
 
         Returns
         -------
         Any
-            [description]
+            Last item in the stack
+        """
+        return self.data[-1]
+
+    def pop(self) -> Any:
+        """removes last element from stack
+
+        Returns
+        -------
+        Any
+            the item thats removed
 
         Raises
         ------
-        _Empty
-            [description]
+        Empty
+            if stack is empty
         """
-        if self.is_empty():
-            raise _Empty("Stack is empty")
-        return self._data[-1].item
+        if self.empty():
+            raise Empty("Stack is empty")
+        return self.data.pop()
 
-    # pyre-ignore
-    def push(self, item: Any) -> None:
-        """adds item to right(top) of stack
 
-        :param item: item to be pushed
-        :type item: Any
-        """
-        self._data.append(
-            Item(item, item if self.is_empty() else max(item, self.max()))
+@dataclass
+class CachedMax:
+    element: int
+    max: int
+
+
+@dataclass
+class StackWithMax:
+    data: List[CachedMax] = field(
+        init=False,
+        default_factory=lambda: [],
+    )
+
+    def __repr__(self):
+        return f"StackWithMax({self.data})"
+
+    def empty(self):
+        return self.data == []
+
+    def pop(self):
+        if self.empty():
+            raise Empty("Stack is empty")
+        return self.data.pop().element
+
+    def peek(self):
+        if self.empty():
+            raise Empty("Stack is empty")
+        return self.data[-1].element
+
+    def max(self):
+        if self.empty():
+            raise Empty("Stack is empty")
+        return self.data[-1].max
+
+    def push(self, item):
+        self.data.append(
+            CachedMax(
+                item,
+                item if self.empty() else max(item, self.max()),
+            )
         )
 
 
-class Queue:
-    """Implementation of Queue using a list
-
-    O(1) for enqueue operation
-    O(n) for dequeue operation
-    Assumes: First In First Out (FIFO)
-    """
-
-    def __init__(self) -> None:
-        """Default constructor, needs no parameters"""
-        self._data: List[Any] = []  # pyre-ignore
-
-    def empty(self) -> bool:
-        return self._data == []
-
-    # pyre-ignore
-    def enqueue(self, item: Any) -> None:
-        self._data.append(item)
-
-    # pyre-ignore
-    def dequeue(self) -> Any:
-        return self._data.pop(0)
-
-    def size(self) -> int:
-        return len(self._data)
-
-    def max(self) -> Union[float, int]:
-        return max(self._data)
+@dataclass
+class CachedMaxWithCount:
+    max: int
+    count: int
 
 
-class CircularQueue:
-    """Implementation of a Queue using a circular Array
+@dataclass
+class StackWithMaxCount:
+    data: List[int] = field(init=False, default_factory=lambda: [])
+    cached_max_with_count: List[CachedMaxWithCount] = field(
+        init=False, default_factory=lambda: []
+    )
 
-    O(1) time for all operations
-    Assumes: First In First Out (FIFO)
-    """
+    def __repr__(self):
+        return (
+            "data: "
+            + repr(self.data)
+            + "\n"
+            + "cached_max_with_count: "
+            + repr(self.cached_max_with_count)
+        )
 
-    # class constant
-    _DEFAULT_CAPACITY = 10
+    def empty(self):
+        return self.data == []
 
-    def __init__(self) -> None:
-        """Default Constructor, needs no parameters"""
-        self._data = [None] * CircularQueue._DEFAULT_CAPACITY
-        self._size = 0
-        self._front = 0
+    def peek(self):
+        return self.data[-1]
 
-    def __len__(self) -> int:
-        return self._size
-
-    def size(self) -> int:
-        return len(self)
-
-    def empty(self) -> bool:
-        return self.size() == 0
-
-    # pyre-ignore
-    def front(self) -> Any:
-        """Returns, but doesn't remove first element"""
+    def pop(self):
         if self.empty():
-            raise IndexError("Queue is Empty")
-        return self._data[self._front]
+            raise Empty("Stack is empty")
+        popped_element = self.data.pop()
+        current_max = self.cached_max_with_count[-1].max
+        if popped_element == current_max:
+            self.cached_max_with_count[-1].count -= 1
+            if self.cached_max_with_count[-1].count == 0:
+                self.cached_max_with_count.pop()
+        return popped_element
 
-    # pyre-ignore
-    def dequeue(self) -> Any:
+    def push(self, item):
+        self.data.append(item)
+        if len(self.cached_max_with_count) == 0:
+            self.cached_max_with_count.append(CachedMaxWithCount(item, 1))
+        else:
+            current_max = self.cached_max_with_count[-1].max
+            if item == current_max:
+                self.cached_max_with_count[-1].count += 1
+            elif item > current_max:
+                self.cached_max_with_count.append(CachedMaxWithCount(item, 1))
+
+    def max(self):
         if self.empty():
-            raise IndexError("Queue is Empty")
-        removed_item = self.front()
-        # reclaim for garbage collection
-        self._data[self._front] = None
-        # get available space and decrement size by 1
-        self._front = (1 + self._front) % len(self._data)
-        self._size -= 1
-        return removed_item
+            raise Empty("Stack is empty")
+        return self.cached_max_with_count[-1].max
 
-    # pyre-ignore
-    def enqueue(self, item: Any) -> None:
-        # if capcacity is reached, double capacity
-        if self.size() == len(self._data):
-            self._resize(2 * len(self._data))
-        avail = (self._front + self.size()) % len(self._data)
-        self._data[avail] = item
-        self._size += 1
 
-    # pyre-ignore
-    def _resize(self, cap):
-        old = self._data
-        self._data = [None] * cap
-        walk = self._front
-        for k in range(self.size()):
-            self._data[k] = old[walk]
-            walk = (1 + walk) % len(old)
-        self._front = 0
+@dataclass
+class QueueWithStacks:
+    enq: Stack = field(init=False)
+    deq: Stack = field(init=False)
+
+    def __post_init__(self):
+        self.enq = Stack()
+        self.deq = Stack()
+
+    def enqueue(self, item):
+        self.enq.push(item)
+
+    def dequeue(self):
+        if not self.deq:
+            while not self.enq.empty():
+                self.deq.push(self.enq.pop())
+        if not self.deq:
+            raise Empty("Stack is empty")
+        return self.deq.pop()

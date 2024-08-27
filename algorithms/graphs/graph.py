@@ -3,7 +3,7 @@ Author: Raj Subramanian
 """
 from __future__ import annotations
 from itertools import permutations
-from marketlearn.algorithms.graphs.base import GraphBase
+from algorithms.graphs.base import GraphBase
 from scipy import sparse
 from typing import Any, Iterator
 import numpy as np
